@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>游戏 Bug 报告</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3248;
+      --accent: #6c63ff;
+      --accent-glow: rgba(108, 99, 255, .22);
+      --text: #e8eaf6;
+      --text-muted: #7b7fa8;
+      --error: #ff6b6b;
+      --success: #43d9ad;
+      --crash: #ff4d4d;
+      --logic: #ff9d4d;
+      --textbug: #4d9dff;
+      --ux: #a78bfa;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      padding: 36px 20px;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #6c63ff, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 6px;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    /* ── Cards ──────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px 24px;
+      margin-bottom: 14px;
+    }
+
+    .card-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-title-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title-left::before {
+      content: '';
+      width: 3px;
+      height: 13px;
+      background: var(--accent);
+      border-radius: 2px;
+      display: block;
+    }
+
+    /* ── Bug card specific ──────────────────────────── */
+    .bug-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px 24px;
+      margin-bottom: 14px;
+      position: relative;
+    }
+
+    .bug-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .bug-num {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .bug-num::before {
+      content: '';
+      width: 3px;
+      height: 13px;
+      background: var(--accent);
+      border-radius: 2px;
+      display: block;
+    }
+
+    .btn-del-bug {
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 0.75rem;
+      padding: 3px 10px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .btn-del-bug:hover {
+      border-color: var(--error);
+      color: var(--error);
+    }
+
+    /* ── Severity chips ─────────────────────────────── */
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip input {
+      display: none;
+    }
+
+    .chip label {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 12px;
+      border-radius: 100px;
+      border: 1.5px solid var(--border);
+      background: var(--surface2);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      transition: all .15s;
+      user-select: none;
+      margin: 0;
+    }
+
+    .chip label:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .chip input:checked+label {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .chip.c1 input:checked+label {
+      background: var(--crash);
+      border-color: var(--crash);
+      box-shadow: 0 0 10px rgba(255, 77, 77, .35);
+    }
+
+    .chip.c2 input:checked+label {
+      background: var(--logic);
+      border-color: var(--logic);
+      box-shadow: 0 0 10px rgba(255, 157, 77, .35);
+    }
+
+    .chip.c3 input:checked+label {
+      background: var(--textbug);
+      border-color: var(--textbug);
+      box-shadow: 0 0 10px rgba(77, 157, 255, .35);
+    }
+
+    .chip.c4 input:checked+label {
+      background: var(--ux);
+      border-color: var(--ux);
+      box-shadow: 0 0 10px rgba(167, 139, 250, .35);
+    }
+
+    /* ── Fields ─────────────────────────────────────── */
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
+    }
+
+    .field>label {
+      display: block;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-bottom: 5px;
+    }
+
+    .req {
+      color: var(--error);
+      margin-left: 3px;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.88rem;
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color .18s, box-shadow .18s;
+      resize: vertical;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    input[type="text"].field-error,
+    textarea.field-error {
+      border-color: var(--error);
+      box-shadow: 0 0 0 2px rgba(255, 107, 107, .18);
+    }
+
+    textarea {
+      min-height: 70px;
+      line-height: 1.6;
+    }
+
+    .row2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    /* ── Severity row ───────────────────────────────── */
+    .sev-row {
+      margin-bottom: 16px;
+    }
+
+    /* ── Desc box ───────────────────────────────────── */
+    .step0-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+    }
+
+    .step0-box textarea {
+      background: transparent;
+      border: none;
+      padding: 0;
+      box-shadow: none !important;
+      min-height: 60px;
+    }
+
+    .step0-box textarea:focus {
+      border: none;
+      box-shadow: none;
+    }
+
+    .step0-box.field-error {
+      border-color: var(--error);
+      box-shadow: 0 0 0 2px rgba(255, 107, 107, .18);
+    }
+
+    /* ── Steps ──────────────────────────────────────── */
+    .steps-list {
+      list-style: none;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 8px;
+    }
+
+    .step-num {
+      min-width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-item input[type="text"] {
+      flex: 1;
+      font-family: 'Courier New', monospace;
+    }
+
+    .btn-remove {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 3px 5px;
+      border-radius: 4px;
+      line-height: 1;
+      transition: color .15s;
+      flex-shrink: 0;
+    }
+
+    .btn-remove:hover {
+      color: var(--error);
+    }
+
+    .btn-add-step {
+      width: 100%;
+      margin-top: 8px;
+      background: none;
+      border: 1.5px dashed var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 0.82rem;
+      padding: 7px;
+      cursor: pointer;
+      transition: all .18s;
+    }
+
+    .btn-add-step:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── Image upload ───────────────────────────────── */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      background: var(--surface2);
+      padding: 18px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .18s;
+      position: relative;
+    }
+
+    .drop-zone.dragover {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .drop-zone.error-ring {
+      border-color: var(--error);
+    }
+
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .drop-label {
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      pointer-events: none;
+    }
+
+    .drop-label small {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+
+    .preview-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .preview-item {
+      position: relative;
+    }
+
+    .preview-item img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      display: block;
+    }
+
+    .preview-item .rm-img {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      background: var(--error);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 0.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    /* ── Divider between bugs ───────────────────────── */
+    .section-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: .06em;
+      margin: 22px 0 10px;
+      text-align: center;
+      position: relative;
+    }
+
+    .section-label::before,
+    .section-label::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 38%;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .section-label::before {
+      left: 0;
+    }
+
+    .section-label::after {
+      right: 0;
+    }
+
+    /* ── Add bug button ─────────────────────────────── */
+    .btn-add-bug {
+      width: 100%;
+      margin-bottom: 14px;
+      background: none;
+      border: 2px dashed var(--accent);
+      border-radius: 12px;
+      color: var(--accent);
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 12px;
+      cursor: pointer;
+      transition: all .18s;
+      opacity: 0.7;
+    }
+
+    .btn-add-bug:hover {
+      opacity: 1;
+      background: var(--accent-glow);
+    }
+
+    /* ── Error banner ───────────────────────────────── */
+    .error-banner {
+      background: rgba(255, 107, 107, .1);
+      border: 1px solid var(--error);
+      border-radius: 9px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      color: var(--error);
+      margin-bottom: 14px;
+      display: none;
+    }
+
+    .error-banner.visible {
+      display: block;
+    }
+
+    /* ── Actions ────────────────────────────────────── */
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .btn-primary {
+      flex: 1;
+      background: linear-gradient(135deg, #6c63ff, #a78bfa);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.92rem;
+      font-weight: 600;
+      padding: 13px;
+      cursor: pointer;
+      transition: opacity .18s, transform .1s;
+      box-shadow: 0 4px 18px var(--accent-glow);
+    }
+
+    .btn-primary:hover {
+      opacity: .9;
+    }
+
+    .btn-primary:active {
+      transform: scale(.98);
+    }
+
+    .btn-secondary {
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 500;
+      padding: 13px 18px;
+      cursor: pointer;
+      transition: all .18s;
+      white-space: nowrap;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-secondary.copied {
+      border-color: var(--success);
+      color: var(--success);
+    }
+
+    .btn-reset {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 0.82rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      margin-top: 8px;
+      display: block;
+      width: 100%;
+      text-align: center;
+      transition: color .15s;
+    }
+
+    .btn-reset:hover {
+      color: var(--error);
+    }
+
+    /* ── Toast ──────────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: var(--success);
+      color: #0f1117;
+      font-weight: 600;
+      padding: 9px 22px;
+      border-radius: 100px;
+      font-size: 0.82rem;
+      opacity: 0;
+      transition: opacity .28s, transform .28s;
+      pointer-events: none;
+      z-index: 200;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 480px) {
+      .row2 {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>🎮 Bug 报告</h1>
+      <p>🧡 填写完成后下载报告/复制 Markdown 发送给开发者 🧡</p>
+    </header>
+
+    <div id="err-banner" class="error-banner"></div>
+
+    <!-- Shared: Game Settings -->
+    <div class="card">
+      <div class="card-title">
+        <div class="card-title-left" style="color:var(--accent);">角色扮演设置</div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="f-role">互动角色<span class="req">*</span></label>
+          <input type="text" id="f-role" placeholder="角色名称" />
+        </div>
+        <div class="field">
+          <label for="f-world">世界书<span class="req">*</span></label>
+          <input type="text" id="f-world" placeholder="世界书名称" />
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="f-identity">玩家身份</label>
+          <input type="text" id="f-identity" placeholder="可选" />
+        </div>
+        <div class="field">
+          <label for="f-agency">AI 主动性</label>
+          <input type="text" id="f-agency" placeholder="可选" />
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">Bug 列表</div>
+
+    <!-- Bug entries container -->
+    <div id="bug-list"></div>
+
+    <button type="button" class="btn-add-bug" id="btn-add-bug">＋ 添加 Bug</button>
+
+    <div class="actions">
+      <button type="button" class="btn-secondary" id="btn-md">复制 Markdown</button>
+      <button type="button" class="btn-primary" id="btn-dl">生成并下载报告 →</button>
+    </div>
+    <button type="button" class="btn-reset" id="btn-reset">重置表单</button>
+  </div>
+
+  <div class="toast" id="toast-el"></div>
+
+  <script>
+    /* ══════════════════════════════════════════════════
+       State
+    ══════════════════════════════════════════════════ */
+    let bugIdCounter = 0;
+    const bugImages = {};   // bugId -> [{id, name, b64, dataUrl, mime}]
+    const bugSteps = {};   // bugId -> stepCounter (int)
+
+    /* ══════════════════════════════════════════════════
+       Toast
+    ══════════════════════════════════════════════════ */
+    function toast(msg) {
+      const el = document.getElementById('toast-el');
+      el.textContent = msg; el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 2200);
+    }
+
+    /* ══════════════════════════════════════════════════
+       Image handling (per bug)
+    ══════════════════════════════════════════════════ */
+    function handleFiles(files, bugId) {
+      [...files].forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const dataUrl = ev.target.result;
+          bugImages[bugId].push({
+            id: Date.now() + Math.random(), name: file.name,
+            b64: dataUrl.split(',')[1], dataUrl, mime: file.type
+          });
+          renderPreviews(bugId);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function renderPreviews(bugId) {
+      const grid = document.querySelector(`.preview-grid[data-bugid="${bugId}"]`);
+      if (!grid) return;
+      grid.innerHTML = '';
+      bugImages[bugId].forEach(img => {
+        const wrap = document.createElement('div');
+        wrap.className = 'preview-item';
+        wrap.innerHTML = `<img src="${img.dataUrl}" alt="${img.name}" />
+        <button class="rm-img" data-imgid="${img.id}">✕</button>`;
+        wrap.querySelector('.rm-img').addEventListener('click', () => {
+          bugImages[bugId] = bugImages[bugId].filter(i => i.id != img.id);
+          renderPreviews(bugId);
+        });
+        grid.appendChild(wrap);
+      });
+    }
+
+    /* ══════════════════════════════════════════════════
+       Steps (per bug)
+    ══════════════════════════════════════════════════ */
+    function addStep(bugId, val = '') {
+      bugSteps[bugId]++;
+      const n = bugSteps[bugId];
+      const list = document.querySelector(`.steps-list[data-bugid="${bugId}"]`);
+      const li = document.createElement('li');
+      li.className = 'step-item';
+      li.innerHTML = `<div class="step-num">${n}</div>
+      <input type="text" placeholder="命令 / 操作描述" value="${val}" />
+      <button type="button" class="btn-remove">✕</button>`;
+      li.querySelector('.btn-remove').addEventListener('click', () => {
+        li.remove(); renumberSteps(bugId);
+      });
+      list.appendChild(li);
+    }
+
+    function renumberSteps(bugId) {
+      const list = document.querySelector(`.steps-list[data-bugid="${bugId}"]`);
+      list.querySelectorAll('.step-num').forEach((el, i) => el.textContent = i + 1);
+    }
+
+    /* ══════════════════════════════════════════════════
+       Create Bug Card DOM
+    ══════════════════════════════════════════════════ */
+    function createBugCard() {
+      const id = ++bugIdCounter;
+      bugImages[id] = [];
+      bugSteps[id] = 0;
+
+      const card = document.createElement('div');
+      card.className = 'bug-card';
+      card.dataset.bugid = id;
+
+      card.innerHTML = `
+      <div class="bug-card-header">
+        <div class="bug-num">Bug #<span class="bug-idx"></span></div>
+        <button type="button" class="btn-del-bug">删除</button>
+      </div>
+
+      <!-- Severity -->
+      <div class="sev-row">
+        <div class="chips">
+          <div class="chip c1"><input type="radio" name="sev-${id}" id="s1-${id}" value="游戏崩溃"><label for="s1-${id}">💥 游戏崩溃</label></div>
+          <div class="chip c2"><input type="radio" name="sev-${id}" id="s2-${id}" value="逻辑错误"><label for="s2-${id}">⚠️ 逻辑错误</label></div>
+          <div class="chip c3"><input type="radio" name="sev-${id}" id="s3-${id}" value="文本错误"><label for="s3-${id}">📝 文本错误</label></div>
+          <div class="chip c4"><input type="radio" name="sev-${id}" id="s4-${id}" value="体验问题"><label for="s4-${id}">✨ 体验问题</label></div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="step0-box" data-bugid="${id}">
+        <textarea class="bug-desc" placeholder="请描述你遇到了什么问题/或者希望优化什么地方" rows="2"></textarea>
+      </div>
+
+      <!-- Steps -->
+      <ul class="steps-list" data-bugid="${id}"></ul>
+      <button type="button" class="btn-add-step" data-bugid="${id}">＋ 添加操作步骤</button>
+
+      <!-- Screenshots -->
+      <div style="margin-top:14px;">
+        <div class="drop-zone" data-bugid="${id}">
+          <input type="file" class="img-input" accept="image/*" multiple data-bugid="${id}" />
+          <div class="drop-label">
+            点击或拖拽上传截图（可多张）<br>
+            <small>支持 Ctrl+V 直接粘贴剪贴板截图</small>
+          </div>
+        </div>
+        <div class="preview-grid" data-bugid="${id}"></div>
+        <div class="field" style="margin-top:10px;">
+          <label>文字补充（可选）</label>
+          <textarea class="bug-note" placeholder="补充截图无法体现的信息..." rows="2"></textarea>
+        </div>
+      </div>
+    `;
+
+      // Delete button
+      card.querySelector('.btn-del-bug').addEventListener('click', () => {
+        card.remove();
+        delete bugImages[id]; delete bugSteps[id];
+        renumberBugs();
+      });
+
+      // Add step button
+      card.querySelector('.btn-add-step').addEventListener('click', () => addStep(id));
+
+      // File input
+      const fileInput = card.querySelector('.img-input');
+      fileInput.addEventListener('change', () => { handleFiles(fileInput.files, id); fileInput.value = ''; });
+
+      // Drag and drop
+      const dz = card.querySelector('.drop-zone');
+      dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+      dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+      dz.addEventListener('drop', e => {
+        e.preventDefault(); dz.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files, id);
+      });
+
+      document.getElementById('bug-list').appendChild(card);
+      renumberBugs();
+    }
+
+    function renumberBugs() {
+      document.querySelectorAll('.bug-card').forEach((card, i) => {
+        card.querySelector('.bug-idx').textContent = i + 1;
+        const delBtn = card.querySelector('.btn-del-bug');
+        // hide delete if only one bug remains
+        delBtn.style.visibility = document.querySelectorAll('.bug-card').length === 1 ? 'hidden' : 'visible';
+      });
+    }
+
+    // Init with one bug
+    createBugCard();
+
+    // Add Bug button
+    document.getElementById('btn-add-bug').addEventListener('click', createBugCard);
+
+    /* ══════════════════════════════════════════════════
+       Global Ctrl+V paste → focused bug card or last
+    ══════════════════════════════════════════════════ */
+    document.addEventListener('paste', e => {
+      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      const imgItems = [...items].filter(it => it.type.startsWith('image/'));
+      if (!imgItems.length) return;
+      e.preventDefault();
+
+      // find active bug card (focused element inside one, or last card)
+      let targetCard = document.activeElement.closest('.bug-card');
+      if (!targetCard) {
+        const cards = document.querySelectorAll('.bug-card');
+        targetCard = cards[cards.length - 1];
+      }
+      if (!targetCard) return;
+      const bugId = parseInt(targetCard.dataset.bugid);
+
+      imgItems.forEach(item => {
+        const file = item.getAsFile();
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const dataUrl = ev.target.result;
+          bugImages[bugId].push({
+            id: Date.now() + Math.random(), name: '剪贴板截图',
+            b64: dataUrl.split(',')[1], dataUrl, mime: file.type
+          });
+          renderPreviews(bugId);
+          toast('✅ 截图已粘贴到 Bug #' + [...document.querySelectorAll('.bug-card')].indexOf(targetCard) + 1);
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    /* ══════════════════════════════════════════════════
+       Collect form data
+    ══════════════════════════════════════════════════ */
+    function getShared() {
+      return {
+        role: document.getElementById('f-role').value.trim(),
+        world: document.getElementById('f-world').value.trim(),
+        identity: document.getElementById('f-identity').value.trim(),
+        agency: document.getElementById('f-agency').value.trim(),
+      };
+    }
+
+    function getBugs() {
+      return [...document.querySelectorAll('.bug-card')].map(card => {
+        const id = parseInt(card.dataset.bugid);
+        return {
+          id,
+          sev: (card.querySelector(`input[name="sev-${id}"]:checked`) || {}).value || '',
+          desc: card.querySelector('.bug-desc').value.trim(),
+          steps: [...card.querySelector('.steps-list').querySelectorAll('input[type="text"]')]
+            .map(i => i.value.trim()).filter(Boolean),
+          images: bugImages[id] || [],
+          note: card.querySelector('.bug-note').value.trim(),
+        };
+      });
+    }
+
+    /* ══════════════════════════════════════════════════
+       Validation
+    ══════════════════════════════════════════════════ */
+    function validate(shared, bugs) {
+      const errs = [];
+      const roleEl = document.getElementById('f-role');
+      const worldEl = document.getElementById('f-world');
+      roleEl.classList.remove('field-error');
+      worldEl.classList.remove('field-error');
+
+      if (!shared.role) { errs.push('互动角色为必填项'); roleEl.classList.add('field-error'); }
+      if (!shared.world) { errs.push('世界书为必填项'); worldEl.classList.add('field-error'); }
+
+      let anyBugHasContent = false;
+      bugs.forEach((bug, i) => {
+        const hasContent = bug.desc || bug.images.length > 0;
+        if (hasContent) anyBugHasContent = true;
+        // highlight card if it exists but has no content at all
+      });
+
+      if (!anyBugHasContent) {
+        errs.push('至少有一个 Bug 需要填写问题描述或上传截图');
+      }
+
+      return errs;
+    }
+
+    function showBanner(errs) {
+      const el = document.getElementById('err-banner');
+      if (!errs.length) { el.classList.remove('visible'); return; }
+      el.innerHTML = errs.map(e => `⚠ ${e}`).join('<br>');
+      el.classList.add('visible');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* ══════════════════════════════════════════════════
+       Build HTML Report
+    ══════════════════════════════════════════════════ */
+    const SEV_COLORS = { '游戏崩溃': '#ff4d4d', '逻辑错误': '#ff9d4d', '文本错误': '#4d9dff', '体验问题': '#a78bfa' };
+    const SEV_ICONS = { '游戏崩溃': '💥', '逻辑错误': '⚠️', '文本错误': '📝', '体验问题': '✨' };
+
+    function sevTag(sev) {
+      if (!sev) return '';
+      return `<span style="display:inline-block;background:${SEV_COLORS[sev] || '#6c63ff'};color:#fff;
+      font-size:.72rem;font-weight:700;padding:2px 10px;border-radius:100px;margin-left:8px;
+      vertical-align:middle;">${SEV_ICONS[sev] || ''} ${sev}</span>`;
+    }
+
+    function buildHtml(shared, bugs) {
+      const now = new Date();
+      const ts = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      const settingPairs = [
+        ['互动角色', shared.role], ['世界书', shared.world],
+        ...(shared.identity ? [['玩家身份', shared.identity]] : []),
+        ...(shared.agency ? [['AI 主动性', shared.agency]] : []),
+      ];
+      const settingsRows = settingPairs.map(([k, v]) =>
+        `<tr><td style="color:#7b7fa8;padding:5px 12px 5px 0;width:130px;font-size:.85rem;">${k}</td>
+       <td style="color:#e8eaf6;font-size:.85rem;">${v}</td></tr>`).join('');
+
+      const S = `width:3px;height:13px;background:#6c63ff;border-radius:2px;display:inline-block;`;
+      const sectionHead = (t) => `
+      <div style="font-size:.74rem;font-weight:600;color:#7b7fa8;text-transform:uppercase;
+           letter-spacing:.1em;margin-bottom:14px;display:flex;align-items:center;gap:7px;">
+        <span style="${S}"></span>${t}</div>`;
+
+      const card = (content) =>
+        `<div style="background:#1a1d27;border:1px solid #2e3248;border-radius:14px;padding:22px 24px;margin-bottom:14px;">${content}</div>`;
+
+      // active bugs only
+      const activeBugs = bugs.filter(b => b.desc || b.images.length || b.steps.length || b.note);
+
+      const bugsHtml = activeBugs.map((bug, idx) => {
+        const descBlock = bug.desc
+          ? `<div style="background:#22263a;border:1px solid #2e3248;border-radius:8px;padding:10px 13px;
+             margin-bottom:${bug.steps.length ? '12px' : '0'};font-size:.9rem;">${bug.desc}</div>` : '';
+
+        const stepsHtml = bug.steps.map((s, i) =>
+          `<li style="display:flex;gap:10px;align-items:flex-start;margin-bottom:7px;font-size:.85rem;">
+           <span style="min-width:22px;height:22px;border-radius:50%;background:#6c63ff;color:#fff;
+             font-size:.7rem;font-weight:700;display:inline-flex;align-items:center;
+             justify-content:center;flex-shrink:0;">${i + 1}</span><span>${s}</span></li>`).join('');
+
+        const imgsHtml = bug.images.map((img, i) =>
+          `<div style="margin-bottom:12px;">
+           <img src="data:${img.mime};base64,${img.b64}" alt="截图${i + 1}"
+             style="max-width:100%;max-height:400px;border-radius:8px;border:1px solid #2e3248;display:block;" />
+           <div style="font-size:.75rem;color:#7b7fa8;margin-top:4px;">图${i + 1}：${img.name}</div>
+         </div>`).join('');
+
+        const hasSteps = bug.steps.length > 0;
+        const hasScreenshots = bug.images.length || bug.note;
+
+        return card(`
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div style="font-size:1rem;font-weight:700;color:#a78bfa;">Bug #${idx + 1}${sevTag(bug.sev)}</div>
+        </div>
+        ${(bug.desc || hasSteps) ? `
+          ${sectionHead('问题描述' + (hasSteps ? ' & 复现步骤' : ''))}
+          ${descBlock}
+          ${hasSteps ? `<ul style="list-style:none;">${stepsHtml}</ul>` : ''}` : ''}
+        ${hasScreenshots ? `
+          <div style="margin-top:${(bug.desc || hasSteps) ? '16px' : '0'};">
+            ${sectionHead('截图与补充')}
+            ${imgsHtml}
+            ${bug.note ? `<div style="background:#22263a;border-radius:8px;padding:10px 13px;font-size:.86rem;line-height:1.65;">${bug.note}</div>` : ''}
+          </div>` : ''}
+      `);
+      }).join('');
+
+      return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>Bug 报告</title></head>
+<body style="background:#0f1117;color:#e8eaf6;font-family:'Segoe UI',sans-serif;padding:36px 20px;margin:0;">
+<div style="max-width:660px;margin:0 auto;">
+  <h1 style="font-size:1.5rem;font-weight:700;color:#a78bfa;margin-bottom:4px;">🐛 Bug 报告</h1>
+  <p style="color:#7b7fa8;font-size:.8rem;margin-bottom:24px;">生成时间：${ts} &nbsp;|&nbsp; 共 ${activeBugs.length} 个 Bug</p>
+  ${card(sectionHead('游戏设置') + `<table style="border-collapse:collapse;width:100%;">${settingsRows}</table>`)}
+  ${bugsHtml}
+  <p style="text-align:center;color:#7b7fa8;font-size:.76rem;margin-top:24px;">由「游戏 Bug 报告」表单生成</p>
+</div></body></html>`;
+    }
+
+    /* ══════════════════════════════════════════════════
+       Build Markdown
+    ══════════════════════════════════════════════════ */
+    function buildMarkdown(shared, bugs) {
+      const lines = ['# Bug 报告\n'];
+
+      const pairs = [
+        ['互动角色', shared.role], ['世界书', shared.world],
+        ...(shared.identity ? [['玩家身份', shared.identity]] : []),
+        ...(shared.agency ? [['AI 主动性', shared.agency]] : []),
+      ];
+      lines.push('## 游戏设置\n');
+      pairs.forEach(([k, v]) => lines.push(`- **${k}**：${v}`));
+      lines.push('');
+
+      const activeBugs = bugs.filter(b => b.desc || b.images.length || b.steps.length || b.note);
+
+      activeBugs.forEach((bug, idx) => {
+        lines.push(`## Bug #${idx + 1}${bug.sev ? ` — ${bug.sev}` : ''}\n`);
+        if (bug.desc) lines.push(bug.desc + '\n');
+        if (bug.steps.length) {
+          bug.steps.forEach((s, i) => lines.push(`${i + 1}. \`${s}\``));
+          lines.push('');
+        }
+        if (bug.images.length || bug.note) {
+          if (bug.images.length) lines.push(`_（${bug.images.length} 张截图，见附件 HTML 报告）_\n`);
+          if (bug.note) lines.push(bug.note + '\n');
+        }
+      });
+
+      return lines.join('\n');
+    }
+
+    /* ══════════════════════════════════════════════════
+       Actions
+    ══════════════════════════════════════════════════ */
+    function nowStamp() {
+      const d = new Date();
+      return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+
+    document.getElementById('btn-dl').addEventListener('click', () => {
+      const shared = getShared(); const bugs = getBugs();
+      const errs = validate(shared, bugs);
+      showBanner(errs);
+      if (errs.length) return;
+      const html = buildHtml(shared, bugs);
+      const a = Object.assign(document.createElement('a'), {
+        href: URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' })),
+        download: `bug_report_${nowStamp()}.html`
+      });
+      a.click(); URL.revokeObjectURL(a.href);
+      toast('✅ 报告已下载');
+    });
+
+    const btnMd = document.getElementById('btn-md');
+    btnMd.addEventListener('click', () => {
+      const shared = getShared(); const bugs = getBugs();
+      const errs = validate(shared, bugs);
+      showBanner(errs);
+      if (errs.length) return;
+      navigator.clipboard.writeText(buildMarkdown(shared, bugs)).then(() => {
+        btnMd.textContent = '✅ 已复制'; btnMd.classList.add('copied');
+        toast('✅ Markdown 已复制');
+        setTimeout(() => { btnMd.textContent = '复制 Markdown'; btnMd.classList.remove('copied'); }, 2200);
+      });
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      document.querySelectorAll('#f-role,#f-world,#f-identity,#f-agency').forEach(el => el.value = '');
+      document.getElementById('err-banner').classList.remove('visible');
+      document.getElementById('bug-list').innerHTML = '';
+      bugIdCounter = 0;
+      Object.keys(bugImages).forEach(k => delete bugImages[k]);
+      Object.keys(bugSteps).forEach(k => delete bugSteps[k]);
+      createBugCard();
+    });
+  </script>
+</body>
+
+</html>
